@@ -1,7 +1,7 @@
 import logging as pythonlogging
 import os
 import base64
-import transcoderJob
+import update_job_status
 from google.cloud import logging
 from flask import Flask, request
 from secure import require_apikey
@@ -34,10 +34,8 @@ def index():
         return f"Bad Request: {msg}", 400
 
     pubsub_message = envelope["message"]
-    print(pubsub_message)
     
     client = logging.Client()
-
     logger = client.logger("service_1")
     logger.log(pubsub_message)
     
@@ -45,11 +43,8 @@ def index():
     if isinstance(pubsub_message, dict) and "data" in pubsub_message:
         name = base64.b64decode(pubsub_message["data"]).decode("utf-8").strip()
     logger.log(name)
-    print(f"Hello {name}!")
-    inputs= name.split(",")
-
-    transcoderJob.create_job_from_preset(inputs[0],inputs[1])
-
+   
+    update_job_status.update_job_status_in_bq(name)
     return ("DONE", 204)
 
 if __name__ == "__main__":
